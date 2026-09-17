@@ -1,0 +1,48 @@
+# Publica estos documentos en GitHub Pages.
+#
+# Existe este repositorio —y no una carpeta del juego— porque `ki-clash` es
+# privado y Pages en privado es de pago. Aquí sólo va lo que tiene que ser
+# público: el código del juego sigue donde estaba.
+#
+# Hay que encender Pages una vez, a mano:
+#   Settings › Pages › Build and deployment › Source: GitHub Actions
+#
+# No se puede hacer desde aquí: el `GITHUB_TOKEN` de un flujo no tiene permiso
+# para crear el sitio de Pages, por mucho `pages: write` que se le dé. Probado.
+name: paginas
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: paginas
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Se sube el repositorio entero menos lo que no es una página.
+      - name: Preparar la carpeta
+        run: |
+          mkdir -p sitio
+          cp *.html sitio/
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: sitio
+      - id: despliegue
+        uses: actions/deploy-pages@v4
